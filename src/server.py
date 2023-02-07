@@ -1,4 +1,4 @@
-import os, traceback, json, tempfile, pytest
+import os, json, tempfile, pytest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pygit2 import clone_repository, GIT_OBJ_BLOB, GIT_OBJ_TREE
 from ast import parse
@@ -98,7 +98,6 @@ class CIServerHandler(BaseHTTPRequestHandler):
                 except SyntaxError:
                     errors += 1
                     print("ERR:", os.path.join(relative_path, item.name))
-                    traceback.print_exc()  # Silence errors
             elif item.type == GIT_OBJ_TREE and item.name != "test": # The test directory should be ignored as it may contain example files that are invalid on purpose
                 errors += CIServerHandler.try_compile_all(item, repo_path, os.path.join(relative_path, item.name))
         return errors
