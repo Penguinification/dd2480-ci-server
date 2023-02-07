@@ -37,7 +37,7 @@ def test_compile_valid_file(capsys):
     Tests that the server correctly clones a remote repository, runs syntax checking
     and detects no errors for a project consisting of a single valid Python file.
     """
-    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort), src.server.CIServerHandler)
+    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort+1), src.server.CIServerHandler)
     thread = Thread(target = web_server.run, args = ()) # Thread writes to stdout
     thread.start()
 
@@ -50,7 +50,7 @@ def test_compile_valid_file(capsys):
             },
             "ref": "refs/heads/main"
         }
-        r = post("http://localhost:"+str(src.server.serverPort), json=post_data)
+        r = post("http://localhost:"+str(src.server.serverPort+1), json=post_data)
 
     web_server.shutdown()
 
@@ -62,7 +62,7 @@ def test_compile_invalid_file(capsys):
     Tests that the server correctly clones a remote repository, runs syntax checking
     and detects an error for a project consisting of a single invalid Python file.
     """
-    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort), src.server.CIServerHandler)
+    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort+1), src.server.CIServerHandler)
     thread = Thread(target = web_server.run, args = ()) # Thread writes to stdout
     thread.start()
 
@@ -75,7 +75,7 @@ def test_compile_invalid_file(capsys):
             },
             "ref": "refs/heads/main"
         }
-        r = post("http://localhost:"+str(src.server.serverPort), json=post_data)
+        r = post("http://localhost:"+str(src.server.serverPort+1), json=post_data)
 
     web_server.shutdown()
 
@@ -88,7 +88,7 @@ def test_run_pytest_passing_tests(capsys):
     As the repository contains a single valid file and test, and they are correctly implemented,
     all tests should pass and no syntax errors should be detected.
     """
-    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort), src.server.CIServerHandler)
+    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort+1), src.server.CIServerHandler)
     thread = Thread(target = web_server.run, args = ()) # Thread writes to stdout
     thread.start()
 
@@ -101,7 +101,7 @@ def test_run_pytest_passing_tests(capsys):
             },
             "ref": "refs/heads/main"
         }
-        r = post("http://localhost:"+str(src.server.serverPort), json=post_data)
+        r = post("http://localhost:"+str(src.server.serverPort+1), json=post_data)
 
     web_server.shutdown()
 
@@ -115,7 +115,7 @@ def test_run_pytest_failing_tests(capsys):
     As the repository contains a single valid file and test, and add is incorrectly implemented,
     the test should fail. No syntax errors should be detected.
     """
-    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort), src.server.CIServerHandler)
+    web_server = src.server.CIServer((src.server.hostName, src.server.serverPort+1), src.server.CIServerHandler)
     thread = Thread(target = web_server.run, args = ()) # Thread writes to stdout
     thread.start()
 
@@ -128,7 +128,7 @@ def test_run_pytest_failing_tests(capsys):
             },
             "ref": "refs/heads/main"
         }
-        r = post("http://localhost:"+str(src.server.serverPort), json=post_data)
+        r = post("http://localhost:"+str(src.server.serverPort+1), json=post_data)
 
     web_server.shutdown()
 
