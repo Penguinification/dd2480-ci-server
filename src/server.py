@@ -1,4 +1,4 @@
-import os, traceback, json, tempfile
+import os, traceback, json, tempfile, pytest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pygit2 import clone_repository, GIT_OBJ_BLOB, GIT_OBJ_TREE
 from ast import parse
@@ -59,9 +59,19 @@ class CIServerHandler(BaseHTTPRequestHandler):
         with tempfile.TemporaryDirectory() as repo_path:
             repo = clone_repository(repository_url, repo_path, checkout_branch=branch_name)
             head_commit = repo.revparse_single(branch_name)
-            tree = head_commit.tree            
+            tree = head_commit.tree
+            # Check for syntax errors
             syntax_errors = self.__try_compile_all(tree, repo_path)
             print("All source files checked:", syntax_errors, "syntax errors")
+            # Check if unit tests fail
+            previous_dir = os.getcwd()
+            os.chdir(repo_path)
+            exit_code = pytest.main()
+            if exit_code == 0:
+                print("All pytest tests were successful!")
+            else:
+                print("Some pytest error or failed test occurred.")
+            os.chdir(previous_dir)
             
             if repo is not None:
                 repo.free()
