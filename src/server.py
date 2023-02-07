@@ -61,7 +61,7 @@ class CIServerHandler(BaseHTTPRequestHandler):
             head_commit = repo.revparse_single(branch_name)
             tree = head_commit.tree
             # Check for syntax errors
-            syntax_errors = self.__try_compile_all(tree, repo_path)
+            syntax_errors = CIServerHandler.try_compile_all(tree, repo_path)
             print("All source files checked:", syntax_errors, "syntax errors")
             # Check if unit tests fail
             previous_dir = os.getcwd()
@@ -79,12 +79,13 @@ class CIServerHandler(BaseHTTPRequestHandler):
         # Send response data
         self.wfile.write(bytes("CI jobs done!", "utf-8"))
 
-    def __try_compile_all(self, tree, repo_path, relative_path=""):
+    @staticmethod
+    def try_compile_all(tree, repo_path, relative_path=""):
         """
         This method recursively iterates through a git tree and attempts to parse every file containing Python source code,
         which it identifies using the .py file extension. It takes three arguments: a git tree, a path to the repository
         containing the tree, and the relative path to the tree within the repository. If the tree represents the entire
-        repository, the relative path should be set to an empty string.
+        repository, the relative path should be set to an empty string. Files in directories called "test" are ignored.
         """
         errors = 0
         for item in tree:
@@ -97,8 +98,8 @@ class CIServerHandler(BaseHTTPRequestHandler):
                 except SyntaxError:
                     errors += 1
                     print("ERR:", os.path.join(relative_path, item.name))
-            elif item.type == GIT_OBJ_TREE:
-                errors += self.__try_compile_all(item, repo_path, os.path.join(relative_path, item.name))
+            elif item.type == GIT_OBJ_TREE and item.name != "test": # The test directory should be ignored as it may contain example files that are invalid on purpose
+                errors += CIServerHandler.try_compile_all(item, repo_path, os.path.join(relative_path, item.name))
         return errors
 
     def do_GET(self):
