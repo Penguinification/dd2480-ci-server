@@ -3,14 +3,19 @@ from threading import Thread
 from requests import post
 from time import sleep
 
-def create_repo_with_files_and_commit(repo_path, files_added):
+def create_repo_with_files_and_commit(repo_path, files_added, custom_paths=None):
     """
     Initializes a git repo in repo_path and copies a file with path file_added
     to the newly initialized repo, creates a commit, then returns the repo.
     """
     # Add test file
-    for file in files_added:
-        shutil.copy(file, repo_path)
+    for i in range(0, len(files_added)):
+        if custom_paths is None:
+            shutil.copy(files_added[i], repo_path)
+        else:
+            path = os.path.join(repo_path, custom_paths[i])
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            shutil.copy(files_added[i], path)
 
     # Create repo
     repo = pygit2.init_repository(repo_path, initial_head="main", bare=False)
@@ -135,3 +140,18 @@ def test_run_pytest_failing_tests(capsys):
     out, _ = capsys.readouterr()
     assert "OK: invalid_add.py\nOK: test_invalid_add.py\nAll source files checked: 0 syntax errors\n" in out
     assert "Some pytest error or failed test occurred." in out
+
+def test_ignore_test_directory():
+    """
+    Checks that any files in a directory called "test" are ignored. In this test case,
+    the syntax check should pass even though there is an invalid file in the "test" directory.
+    """
+    # Create repo and commit
+    with tempfile.TemporaryDirectory() as local_repo_path:
+        files = [os.path.join(".", "src", "test", "valid_files", "hello_world.py"), os.path.join(".", "src", "test", "invalid_files", "hello_world_invalid.py")]
+        custom_paths = ["", "test"]
+        repo = create_repo_with_files_and_commit(local_repo_path, files, custom_paths)
+        head_commit = repo.revparse_single("main")
+        tree = head_commit.tree
+        syntax_errors = src.server.CIServerHandler.try_compile_all(tree, local_repo_path)
+        assert(syntax_errors == 0)
