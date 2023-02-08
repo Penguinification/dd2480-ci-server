@@ -2,6 +2,8 @@ import os, shutil, tempfile, pygit2, src.server
 from threading import Thread
 from requests import post
 from time import sleep
+from github import Github
+from random import getrandbits
 
 def create_repo_with_files_and_commit(repo_path, files_added, custom_paths=None):
     """
@@ -155,3 +157,34 @@ def test_ignore_test_directory():
         tree = head_commit.tree
         syntax_errors = src.server.CIServerHandler.try_compile_all(tree, local_repo_path)
         assert(syntax_errors == 0)
+
+def test_set_commit_status():
+    """
+    Tests that a commit status can be correctly set for a specific repo.
+    Randomly generates a context message for the status and makes sure that the specific status is found among
+    the commit statuses after setting it.
+    Needs to have the CI_SERVER_AUTH_TOKEN environment variable set to a valid personal access token with access
+    rights to repo:status.
+    """
+    repo_name = "dd2480-ci-server"
+    owner_name = "Penguinification"
+    commit_sha = "fdac21a016ed65af6d7483a5bcc09490915e138c"
+    state = "success"
+    context = "test-set-commit-status" + str(getrandbits(32)) # could maybe make use of commit status ID instead?
+    # set commit status
+    src.server.CIServerHandler.set_commit_status(owner_name, repo_name, commit_sha, state, context)
+
+    # get commit status
+    try:  
+        g = Github(os.environ["CI_SERVER_AUTH_TOKEN"])
+        repo = g.get_user(owner_name).get_repo(repo_name)
+        sha = repo.get_commit(sha=commit_sha)
+        statuses = sha.get_statuses()
+        found_status = False
+        for status in statuses:
+            if status.context == context and status.state == state:
+                found_status = True
+        assert found_status
+    except KeyError: # environment variable not set
+        print("Can't set commit status: CI_SERVER_AUTH_TOKEN environment variable not set.")
+        assert False

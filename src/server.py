@@ -2,6 +2,7 @@ import os, json, tempfile, pytest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pygit2 import clone_repository, GIT_OBJ_BLOB, GIT_OBJ_TREE
 from ast import parse
+from github import Github
 
 hostName = "localhost"
 serverPort = 8080
@@ -72,12 +73,49 @@ class CIServerHandler(BaseHTTPRequestHandler):
             else:
                 print("Some pytest error or failed test occurred.")
             os.chdir(previous_dir)
-            
+
+            # Set commit status
+            state = ""
+            if syntax_errors != 0:
+                state = "failure" # syntax errors, couldn't build
+            elif exit_code == 0:
+                state = "success" # no syntax errors, there were tests and they succeeded
+            else:
+                state = "error" # there were no tests or at least one of them failed (or some internal pytest error)
+
+            try:
+                repo_name = post_data["repository"]["name"]
+                owner_name = post_data["repository"]["owner"]["name"]
+                commit_sha = post_data["head_commit"]["id"]
+                CIServerHandler.set_commit_status(owner_name, repo_name, commit_sha, state)
+            except KeyError:
+                print("Missing fields in POST request!")
+                self.send_response(400)
+                return
+
             if repo is not None:
                 repo.free()
 
         # Send response data
         self.wfile.write(bytes("CI jobs done!", "utf-8"))
+
+    @staticmethod
+    def set_commit_status(owner_name, repo_name, commit_sha, state, context="continuous-integration"):
+        """
+        Uses the input parameters to set a commit status on the relevant commit on GitHub.
+        Needs to have the CI_SERVER_AUTH_TOKEN environment variable set to a valid personal access token with
+        access rights to repo:status. 
+        """
+        try:
+            g = Github(os.environ["CI_SERVER_AUTH_TOKEN"])
+            repo = g.get_user(owner_name).get_repo(repo_name)
+            sha = repo.get_commit(sha=commit_sha)
+            sha.create_status(
+                state=state,
+                context=context
+            )
+        except KeyError:
+            print("Can't set commit status: CI_SERVER_AUTH_TOKEN environment variable not set.")
 
     @staticmethod
     def try_compile_all(tree, repo_path, relative_path=""):
@@ -113,6 +151,9 @@ class CIServerHandler(BaseHTTPRequestHandler):
         print("Connection!")
 
 if __name__ == "__main__":   
-    # Used https://pythonbasics.org/webserver/ as a base for the server     
-    webServer = CIServer((hostName, serverPort), CIServerHandler)
-    webServer.run()
+    # Used https://pythonbasics.org/webserver/ as a base for the server
+    if os.environ.get("CI_SERVER_AUTH_TOKEN") is None:
+        print("Please set the CI_SERVER_AUTH_TOKEN enviroment variable before starting the server!")
+    else:
+        webServer = CIServer((hostName, serverPort), CIServerHandler)
+        webServer.run()
