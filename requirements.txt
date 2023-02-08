@@ -1,0 +1,4 @@
+pygit2==1.11.1
+PyGithub==1.57
+pytest==7.1.2
+requests==2.28.1
