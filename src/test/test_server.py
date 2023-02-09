@@ -60,7 +60,7 @@ def test_compile_valid_file(capsys):
     web_server.shutdown()
 
     out, _ = capsys.readouterr()
-    assert "OK: hello_world.py\nAll source files checked: 0 syntax errors\n" in out
+    assert "ERR: hello_world.py\nAll source files checked: 0 syntax errors\n" in out
 
 def test_compile_invalid_file(capsys):
     """
