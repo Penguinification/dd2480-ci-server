@@ -1,6 +1,6 @@
 # dd2480-ci-server
 ## Summary
-This is a small CI server for python projects. It will be triggered as a GitHub webhook on **push events** only. When a push has been delivered to the server, it will try to parse all python files to detect syntax errors. Then, it will use `pytest` to run all test files. It will then set a GitHub commit status on the relevant commit. If there are syntax errors, the status will be `failure`. If there are no tests or at least one test fails, the status will be `error`. Otherwise, if all tests succeeds, it will be `success`.
+This is a small CI server for Python projects. It will be triggered as a GitHub webhook on **push events** only. When a push has been delivered to the server, it will try to parse all python files to detect syntax errors. Then, it will use `pytest` to run all test files. It will then set a GitHub commit status on the relevant commit. If there are syntax errors, the status will be `failure`. If there are no tests or at least one test fails, the status will be `error`. Otherwise, if all tests succeeds, it will be `success`.
 
 ## Running the project
 To run the server, make sure to install all required dependencies with `pip install -r requirements.txt`. In order for the commit statuses to be set, the machine running the server needs to have a valid GitHub Personal Access Token with access rights to `repo:status` saved in an environment variable called `CI_SERVER_AUTH_TOKEN`. Then, start the server with `python src/server.py`. 
