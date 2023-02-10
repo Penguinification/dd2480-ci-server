@@ -160,7 +160,8 @@ def test_ignore_test_directory():
 
 def test_set_commit_status():
     """
-    Tests that a commit status can be correctly set for a specific repo.
+    Tests that a commit status can be correctly set for a specific repo/commit 
+    (our source repo, commit fdac21a from Feb. 7 2023 on the 'assessment' branch).
     Randomly generates a context message for the status and makes sure that the specific status is found among
     the commit statuses after setting it.
     Needs to have the CI_SERVER_AUTH_TOKEN environment variable set to a valid personal access token with access
@@ -170,9 +171,10 @@ def test_set_commit_status():
     owner_name = "Penguinification"
     commit_sha = "fdac21a016ed65af6d7483a5bcc09490915e138c"
     state = "success"
+    description = "Test to make sure that commit status is being set properly"
     context = "test-set-commit-status" + str(getrandbits(32)) # could maybe make use of commit status ID instead?
     # set commit status
-    src.server.CIServerHandler.set_commit_status(owner_name, repo_name, commit_sha, state, context)
+    src.server.CIServerHandler.set_commit_status(owner_name, repo_name, commit_sha, state, description, context)
 
     # get commit status
     try:  
@@ -182,7 +184,7 @@ def test_set_commit_status():
         statuses = sha.get_statuses()
         found_status = False
         for status in statuses:
-            if status.context == context and status.state == state:
+            if status.context == context and status.state == state and status.description == description:
                 found_status = True
         assert found_status
     except KeyError: # environment variable not set

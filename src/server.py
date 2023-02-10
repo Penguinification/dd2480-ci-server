@@ -76,18 +76,22 @@ class CIServerHandler(BaseHTTPRequestHandler):
 
             # Set commit status
             state = ""
+            description = ""
             if syntax_errors != 0:
                 state = "failure" # syntax errors, couldn't build
+                description = "Couldn't build due to syntax errors"
             elif exit_code == 0:
                 state = "success" # no syntax errors, there were tests and they succeeded
+                description = "No syntax errors, all tests succeeded"
             else:
                 state = "error" # there were no tests or at least one of them failed (or some internal pytest error)
+                description = "Tests failed"
 
             try:
                 repo_name = post_data["repository"]["name"]
                 owner_name = post_data["repository"]["owner"]["name"]
                 commit_sha = post_data["head_commit"]["id"]
-                CIServerHandler.set_commit_status(owner_name, repo_name, commit_sha, state)
+                CIServerHandler.set_commit_status(owner_name, repo_name, commit_sha, state, description)
             except KeyError:
                 print("Missing fields in POST request!")
                 self.send_response(400)
@@ -100,7 +104,7 @@ class CIServerHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes("CI jobs done!", "utf-8"))
 
     @staticmethod
-    def set_commit_status(owner_name, repo_name, commit_sha, state, context="continuous-integration"):
+    def set_commit_status(owner_name, repo_name, commit_sha, state, description="", context="continuous-integration"):
         """
         Uses the input parameters to set a commit status on the relevant commit on GitHub.
         Needs to have the CI_SERVER_AUTH_TOKEN environment variable set to a valid personal access token with
@@ -112,7 +116,8 @@ class CIServerHandler(BaseHTTPRequestHandler):
             sha = repo.get_commit(sha=commit_sha)
             sha.create_status(
                 state=state,
-                context=context
+                context=context,
+                description=description
             )
         except KeyError:
             print("Can't set commit status: CI_SERVER_AUTH_TOKEN environment variable not set.")
