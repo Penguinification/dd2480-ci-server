@@ -5,6 +5,9 @@ This is a small CI server for python projects. It will be triggered as a GitHub 
 ## Running the project
 To run the server, make sure to install all required dependencies with `pip install -r requirements.txt`. In order for the commit statuses to be set, the machine running the server needs to have a valid GitHub Personal Access Token with access rights to `repo:status` saved in an environment variable called `CI_SERVER_AUTH_TOKEN`. Then, start the server with `python src/server.py`. 
 
+## Browsable documentation
+To create HTML documentation from the docstrings, navigate to the `docs` directory and run `make html`. The documentation can be accessed by opening the `index.html` file that is created in the `docs/build` directory.
+
 ## Implementation and testing
 ### P1: Compilation
 **Implementation:**
@@ -27,7 +30,10 @@ We implemented the notification of CI results as GitHub commit statuses. This wa
 **Testing:** 
 We implemented a unit test that will set the commit status of a specific commit in our repo (hard-coded) with a context message that says that it's a test and contains a random 32-bit number. Then, all statuses on that commit are fetched, and if there is a status with the correct state and context message, the test will pass. Othwerwise, it fails. 
 
+## P+ implementation
+We implemented build history by creating a JSON file that stores a JSON object for every build. The information stored is the commit SHA (which is the key for each build object), a timestamp, and a message describing the build (containing the commit status and its description). When visiting the address at which the server is hosted (i.e. doing a GET request to the base address), it will generate an HTML page listing all the builds in the JSON file, with clickable links that will generate a HTML page for the specific build by reading the JSON file.
+
 ## Contributions
-Most tasks were done by several group members working together. Edit and Erik worked on implementing a basic server, which was roughly the equivalent of the Java code skeleton that was provided. Edit and Elias implemented the syntax checking. The entire group worked together on implementing the testing functionality and commit status setting. 
+Most tasks were done by several group members working together. Edit and Erik worked on implementing a basic server, which was roughly the equivalent of the Java code skeleton that was provided. Edit and Elias implemented the syntax checking and P+ part. The entire group worked together on implementing the testing functionality and commit status setting. 
 
 ## Essence

@@ -190,3 +190,45 @@ def test_set_commit_status():
     except KeyError: # environment variable not set
         print("Can't set commit status: CI_SERVER_AUTH_TOKEN environment variable not set.")
         assert False
+
+def test_generate_build_list():
+    """
+    Tests that the index page lists all builds properly
+    """
+    builds = ["0", "1"]
+    expected = "<!DOCTYPE html><html><head><title>List of CI builds</title></head><body><ul><p>List of CI builds</p><li><a href='./0'>0</a></li><li><a href='./1'>1</a></li></ul></body></html>"
+    res = src.server.CIServerHandler.generate_build_list(builds)
+    assert expected == res
+
+def test_generate_build_html_document():
+    """
+    Tests that the HTML page for a given build is created properly
+    """
+    build = {"message": "m", "timestamp": "t"}
+    sha = "0"
+    expected = "<!DOCTYPE html><html><head><title>CI build 0</title></head><body><p>Build: 0</p><p>Time: t</p><p>Message: m</p></body></html>"
+    res = src.server.CIServerHandler.generate_build_html_document(sha, build)
+    assert expected == res
+
+def test_ensure_builds_json_exists():
+    """
+    Tests that there is a file called builds.json after calling ensure_builds_json_exists()
+    """
+    src.server.CIServerHandler.ensure_builds_json_exists()
+    assert os.path.isfile("./builds.json")
+
+def test_try_json_load_empty_file():
+    """
+    Tests that an empty file will return an empty dict
+    """
+    with tempfile.NamedTemporaryFile() as f:
+        res = src.server.CIServerHandler.try_json_load(f.name)
+        assert res == {}
+
+def test_try_json_load():
+    """
+    Tests that a 
+    """
+    f = "./src/test/valid_files/dummy.json"
+    res = src.server.CIServerHandler.try_json_load(f)
+    assert res["a"]=="b"
